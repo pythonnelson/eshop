@@ -112,7 +112,7 @@ export default function VendorDashboard() {
     if (stats?.orders_series?.length > 0 && dataSelection === 'products' && (!stats?.products_series?.length)) {
       setDataSelection('revenue');
     }
-  }, [stats]);
+  }, [stats, dataSelection]);
 
   if (loading || !profile) {
     return (

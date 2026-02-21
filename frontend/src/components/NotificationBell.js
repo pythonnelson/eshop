@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { IconButton, Badge, Menu, MenuItem, Typography, Box, Button } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useAuth } from '../context/AuthContext';
@@ -43,12 +43,12 @@ export default function NotificationBell() {
             <Button size="small" onClick={() => { markAllRead(); handleClose(); }}>Mark all read</Button>
           )}
         </Box>
-        {notifications.length === 0 ? (
+        {notifications.filter((n) => !n.is_read).length === 0 ? (
           <MenuItem disabled>
             <Typography color="text.secondary">No notifications</Typography>
           </MenuItem>
         ) : (
-          notifications.slice(0, 10).map((n) => (
+          notifications.filter((n) => !n.is_read).slice(0, 10).map((n) => (
             <MenuItem
               key={n.id}
               onClick={() => handleClick(n)}

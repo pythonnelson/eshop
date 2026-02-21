@@ -22,7 +22,7 @@ import { useCart } from '../context/CartContext';
 
 export default function Cart() {
   const { user } = useAuth();
-  const { guestCart, updateGuestCartItem, removeFromGuestCart, guestCartTotal, clearGuestCart } = useCart();
+  const { guestCart, updateGuestCartItem, removeFromGuestCart, guestCartTotal } = useCart();
   const [serverCart, setServerCart] = useState(null);
   const [loading, setLoading] = useState(true);
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Box, Grid, Typography, TextField, InputAdornment, Select, MenuItem, FormControl, InputLabel, CircularProgress } from '@mui/material';
+import { Box, Typography, TextField, InputAdornment, Select, MenuItem, FormControl, InputLabel, CircularProgress } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import api from '../api/axios';
 import ProductCard from '../components/ProductCard';

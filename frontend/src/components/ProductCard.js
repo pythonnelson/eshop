@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardMedia, Typography, Box } from '@mui/material';
+import { Card, CardContent, CardMedia, Typography, Alert } from '@mui/material';
 import { getMediaUrl } from '../api/axios';
 
 export default function ProductCard({ product, compact = false }) {
@@ -32,6 +32,11 @@ export default function ProductCard({ product, compact = false }) {
         sx={{ objectFit: 'contain', p: 1 }}
       />
       <CardContent sx={{ flexGrow: 1, py: compact ? 1.5 : 2 }}>
+        {(product.stock ?? 0) === 0 && (
+          <Alert severity="info" sx={{ py: 0.25, px: 1, mb: 1, fontSize: '0.75rem', '& .MuiAlert-message': { fontSize: '0.75rem' } }}>
+            This item cannot be ordered because it's low on stock.
+          </Alert>
+        )}
         <Typography variant={compact ? 'subtitle1' : 'h6'} sx={{ fontSize: compact ? '0.95rem' : '1rem' }} noWrap fontWeight={500}>
           {product.name}
         </Typography>

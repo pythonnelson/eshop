@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Box, Typography, Button, TextField, CircularProgress, Paper } from '@mui/material';
+import { Box, Typography, Button, TextField, CircularProgress, Paper, Alert } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import api from '../api/axios';
@@ -76,6 +76,9 @@ export default function ProductDetail() {
             <Typography color="text.secondary" gutterBottom>by {product.vendor_name}</Typography>
             <Typography variant="h4" sx={{ color: '#B12704', fontWeight: 700, my: 2 }}>${Number(product.price).toFixed(2)}</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>In stock: {product.stock}</Typography>
+            {(product.stock ?? 0) === 0 && (
+              <Alert severity="info" sx={{ mb: 2 }}>This item cannot be ordered because it's low on stock.</Alert>
+            )}
             {canAddToCart && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <TextField
