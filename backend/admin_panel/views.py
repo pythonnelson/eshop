@@ -32,6 +32,54 @@ class AdminUserListView(generics.ListAPIView):
         return qs
 
 
+class AdminUserDetailView(APIView):
+    """Suspend or ban a user. Admin only."""
+    permission_classes = [IsAdminRole]
+    http_method_names = ['get', 'patch']
+
+    def get(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(UserSerializer(user).data)
+
+    def patch(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        if user.is_superuser:
+            return Response({'error': 'Cannot suspend or ban superuser'}, status=status.HTTP_403_FORBIDDEN)
+        action = request.data.get('action')
+        if action == 'ban':
+            user.is_active = False
+            user.is_suspended = False
+            user.suspended_until = None
+            user.save(update_fields=['is_active', 'is_suspended', 'suspended_until'])
+            return Response({'message': 'User banned', 'user': UserSerializer(user).data})
+        if action == 'suspend':
+            from datetime import timedelta
+            days = int(request.data.get('days', 7))
+            user.is_suspended = True
+            user.suspended_until = timezone.now() + timedelta(days=days)
+            user.save(update_fields=['is_suspended', 'suspended_until'])
+            return Response({'message': f'User suspended for {days} days', 'user': UserSerializer(user).data})
+        if action == 'unsuspend':
+            user.is_suspended = False
+            user.suspended_until = None
+            user.save(update_fields=['is_suspended', 'suspended_until'])
+            return Response({'message': 'User unsuspended', 'user': UserSerializer(user).data})
+        if action == 'unban':
+            user.is_active = True
+            user.save(update_fields=['is_active'])
+            return Response({'message': 'User unbanned', 'user': UserSerializer(user).data})
+        return Response(
+            {'error': 'Invalid action. Use: ban, unban, suspend, unsuspend. For suspend, provide "days" (default 7).'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
 class AdminVendorListView(generics.ListAPIView):
     """List all vendors (any status)."""
     queryset = VendorProfile.objects.all().order_by('-created_at')

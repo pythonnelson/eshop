@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from notifications.services import notify_admins
+from vendors.permissions import IsApprovedVendor
 from .models import Category, Product, ProductImage
 from .filters import ProductFilter
 from .serializers import (
@@ -97,7 +98,7 @@ class ProductReviewsListView(APIView):
 class VendorProductListView(generics.ListCreateAPIView):
     """Vendor's product list and creation"""
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsApprovedVendor]
 
     def get_queryset(self):
         return Product.objects.filter(vendor=self.request.user.vendor_profile).prefetch_related('additional_images')
@@ -120,7 +121,7 @@ class VendorProductListView(generics.ListCreateAPIView):
 class VendorProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Vendor's product detail, update, delete"""
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsApprovedVendor]
 
     def get_queryset(self):
         return Product.objects.filter(vendor=self.request.user.vendor_profile).prefetch_related('additional_images')
@@ -128,7 +129,7 @@ class VendorProductDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class VendorProductImageAddView(APIView):
     """Add one or more images to a vendor's product."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsApprovedVendor]
 
     def post(self, request, pk):
         product = Product.objects.filter(pk=pk, vendor=request.user.vendor_profile).first()
@@ -147,7 +148,7 @@ class VendorProductImageAddView(APIView):
 
 class VendorProductImageDeleteView(APIView):
     """Remove an additional image from a vendor's product."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsApprovedVendor]
 
     def delete(self, request, pk, image_pk):
         product = Product.objects.filter(pk=pk, vendor=request.user.vendor_profile).first()

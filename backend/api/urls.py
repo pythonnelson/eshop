@@ -6,12 +6,8 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from django.conf import settings
 
-from rest_framework_simplejwt.views import ( # type: ignore
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
-    TokenBlacklistView
-)
+from rest_framework_simplejwt.views import TokenVerifyView, TokenBlacklistView
+from authentication.views_jwt import BlockedUserTokenObtainPairView, BlockedUserTokenRefreshView
 
 # API Documentation
 schema_view = get_schema_view(
@@ -32,8 +28,8 @@ urlpatterns = [
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='api-docs'),
 
     path('api-auth/', include('rest_framework.urls')),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/', BlockedUserTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', BlockedUserTokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('api/token/blacklist/', TokenBlacklistView.as_view(), name='token_blacklist'),
 

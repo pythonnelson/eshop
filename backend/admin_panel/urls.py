@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     AdminUserListView,
+    AdminUserDetailView,
     AdminVendorListView,
     AdminVendorDetailView,
     AdminCategoryListCreateView,
@@ -15,6 +16,7 @@ app_name = "admin_panel"
 
 urlpatterns = [
     path('users/', AdminUserListView.as_view(), name='admin-user-list'),
+    path('users/<int:pk>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
     path('vendors/', AdminVendorListView.as_view(), name='admin-vendor-list'),
     path('vendors/<int:pk>/', AdminVendorDetailView.as_view(), name='admin-vendor-detail'),
     path('categories/', AdminCategoryListCreateView.as_view(), name='admin-category-list'),

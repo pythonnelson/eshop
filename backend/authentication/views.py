@@ -39,6 +39,11 @@ class LoginView(generics.GenericAPIView):
         
         user = authenticate(email=email, password=password)
         
+        if user and user.is_blocked():
+            return Response({
+                'error': 'Your account has been suspended or banned. Please contact support.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
         if user:
             # Generate JWT tokens
             refresh = RefreshToken.for_user(user)

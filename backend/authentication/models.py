@@ -49,6 +49,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_suspended = models.BooleanField(default=False)
+    suspended_until = models.DateTimeField(null=True, blank=True, help_text='If set and in future, user is suspended')
     date_joined = models.DateTimeField(default=timezone.now)
     
     objects = UserManager()
@@ -66,6 +68,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
+
+    def is_blocked(self):
+        """True if user is banned (inactive) or suspended."""
+        if not self.is_active:
+            return True
+        if self.is_suspended:
+            return True
+        if self.suspended_until and timezone.now() < self.suspended_until:
+            return True
+        return False
     
 class CustomerProfile(models.Model):
     """Customer/Buyer Profile"""
