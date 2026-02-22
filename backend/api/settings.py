@@ -126,24 +126,36 @@ def _get_db_config():
             # Handle postgres:// and postgresql://
             if parsed.scheme not in ('postgres', 'postgresql'):
                 raise ValueError(f"Unsupported scheme: {parsed.scheme}")
+            opts = dict(urllib.parse.parse_qsl(parsed.query)) if parsed.query else {}
+            host = parsed.hostname or 'localhost'
+            if 'sslmode' not in opts:
+                opts['sslmode'] = 'prefer' if host in ('localhost', '127.0.0.1') else 'require'
             return {
                 "ENGINE": "django.db.backends.postgresql",
                 "NAME": parsed.path.lstrip('/') or config('DB_NAME', default='eshop_db'),
                 "USER": urllib.parse.unquote(parsed.username or ''),
                 "PASSWORD": urllib.parse.unquote(parsed.password or ''),
-                "HOST": parsed.hostname or 'localhost',
+                "HOST": host,
                 "PORT": str(parsed.port or 5432),
-                "OPTIONS": dict(urllib.parse.parse_qsl(parsed.query)) if parsed.query else {},
+                "OPTIONS": opts,
             }
         except Exception as e:
             raise ValueError(f"Invalid DATABASE_URL: {e}") from e
+    db_host = config('DB_HOST', default='localhost')
+    db_opts = {}
+    sslmode = config('DB_SSLMODE', default='')
+    if not sslmode:
+        sslmode = 'prefer' if db_host in ('localhost', '127.0.0.1') else 'require'
+    db_opts['sslmode'] = sslmode
+
     return {
         "ENGINE": "django.db.backends.postgresql",
-        "HOST": config('DB_HOST', default='localhost'),
+        "HOST": db_host,
         "PORT": config('DB_PORT', default='5432'),
         "NAME": config('DB_NAME', default='eshop_db'),
         "USER": config('DB_USER', default='postgres'),
         "PASSWORD": config('DB_PASSWORD', default=''),
+        "OPTIONS": db_opts,
     }
 
 DATABASES = {"default": _get_db_config()}
