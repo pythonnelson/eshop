@@ -104,26 +104,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "api.wsgi.application"
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": env("DB_NAME"),
-#         "USER": env("DB_USER"),
-#         "PASSWORD": env("DB_PASSWORD"),
-#         "HOST": env("DB_HOST"),
-#         "PORT": env("DB_PORT", default="5432"),
-#     },
-#     'default': env.db(), 
-# }
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": env("DATABASE_URL"),
-#     },
-#     'default': env.db(), 
-# }
-
 DATABASES = {
     'default': env.db(),  # This reads DATABASE_URL
 }
@@ -172,17 +152,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Custom User Model
 AUTH_USER_MODEL = 'authentication.User'
 
-# Email configurations
-EMAIL_HOST = config('EMAIL_HOST', default='localhost')
-EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
-
 # Stripe (optional - set in .env for live payments)
-# STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
-STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='').strip()
-STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='pk_test_placeholder')
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='').strip()
+STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLISHABLE_KEY', default='pk_test_placeholder')
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
