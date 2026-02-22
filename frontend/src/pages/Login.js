@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Box, TextField, Button, Typography, Alert, Paper, CircularProgress } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
@@ -8,6 +8,14 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const authError = sessionStorage.getItem('authError');
+    if (authError) {
+      setError(authError);
+      sessionStorage.removeItem('authError');
+    }
+  }, []);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,7 +34,7 @@ export default function Login() {
       );
       navigate(path, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
+      setError(err.response?.data?.error || err.response?.data?.detail || 'Login failed');
     } finally {
       setLoading(false);
     }

@@ -322,7 +322,7 @@ export default function VendorDashboard() {
               </Paper>
             </>
           )}
-          {activeView === 'products' && <VendorProducts />}
+          {activeView === 'products' && <VendorProducts vendorStatus={profile?.status} />}
           {activeView === 'orders' && <VendorOrders />}
           {activeView === 'profile' && <VendorProfile />}
         </Paper>

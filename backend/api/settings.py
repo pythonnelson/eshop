@@ -83,6 +83,12 @@ CORS_ALLOWED_ORIGINS = [
     "https://eshop-proj.vercel.app",
     "https://eshop.sevalla.app",
 ]
+
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:8000",
+#     "http://localhost:3000",
+# ]
+
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[]) 
 
 ROOT_URLCONF = "api.urls"

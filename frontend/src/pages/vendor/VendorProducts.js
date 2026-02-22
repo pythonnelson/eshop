@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, MenuItem, Chip } from '@mui/material';
+import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, MenuItem, Chip, Alert } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import api, { getMediaUrl } from '../../api/axios';
 
-export default function VendorProducts() {
+export default function VendorProducts({ vendorStatus }) {
+  const isApproved = vendorStatus === 'APPROVED';
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [open, setOpen] = useState(false);
+  const [apiError, setApiError] = useState('');
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', price: '', stock: '', category: '', image: null, tax_percent: '', discount_percent: '', shipping_fee: '', brand: '', about_this_item: '', technical_specs_raw: '', compare_at_price: '', color: '', size: '', dimension: '', weight: '' });
   const [additionalImages, setAdditionalImages] = useState([]);
@@ -87,20 +89,30 @@ export default function VendorProducts() {
       fetchProducts();
       handleClose();
     } catch (err) {
-      console.error(err);
+      setApiError(err.response?.data?.detail || err.response?.data?.error || 'Something went wrong');
     }
   };
 
-  const handleDelete = (id) => { if (window.confirm('Delete this product? This cannot be undone.')) api.delete(`/products/vendor/products/${id}/`).then(fetchProducts); };
+  const handleDelete = (id) => {
+    if (window.confirm('Delete this product? This cannot be undone.')) {
+      api.delete(`/products/vendor/products/${id}/`).then(fetchProducts).catch((err) => setApiError(err.response?.data?.detail || 'Failed to delete'));
+    }
+  };
   const handleStopSelling = (id, isActive) => {
     api.patch(`/products/vendor/products/${id}/`, { is_active: isActive }).then(fetchProducts);
   };
 
   return (
     <Box>
+      {apiError && <Alert severity="error" onClose={() => setApiError('')} sx={{ mb: 2 }}>{apiError}</Alert>}
+      {!isApproved && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Your vendor account is pending approval. You cannot add, edit, or delete products until an admin approves your account.
+        </Alert>
+      )}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">My Products</Typography>
-        <Button startIcon={<AddIcon />} variant="contained" onClick={() => handleOpen()}>Add Product</Button>
+        <Button startIcon={<AddIcon />} variant="contained" onClick={() => handleOpen()} disabled={!isApproved}>Add Product</Button>
       </Box>
       <TableContainer component={Paper}>
         <Table>
@@ -127,11 +139,11 @@ export default function VendorProducts() {
                   <Chip label={p.is_active ? 'Selling' : 'Stopped'} size="small" color={p.is_active ? 'success' : 'default'} />
                 </TableCell>
                 <TableCell align="right">
-                  <Button size="small" onClick={() => handleStopSelling(p.id, !p.is_active)} sx={{ mr: 0.5 }}>
+                  <Button size="small" onClick={() => handleStopSelling(p.id, !p.is_active)} disabled={!isApproved} sx={{ mr: 0.5 }}>
                     {p.is_active ? 'Stop selling' : 'Resume'}
                   </Button>
-                  <IconButton size="small" onClick={() => handleOpen(p)}><EditIcon /></IconButton>
-                  <IconButton size="small" color="error" onClick={() => handleDelete(p.id)}><DeleteIcon /></IconButton>
+                  <IconButton size="small" onClick={() => handleOpen(p)} disabled={!isApproved}><EditIcon /></IconButton>
+                  <IconButton size="small" color="error" onClick={() => handleDelete(p.id)} disabled={!isApproved}><DeleteIcon /></IconButton>
                 </TableCell>
               </TableRow>
             ))}
