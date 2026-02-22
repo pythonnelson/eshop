@@ -79,8 +79,8 @@ SIMPLE_JWT = {
 
 # CORS Settings (for React frontend)
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    # "http://localhost:3000",
+    "https://eshop-01rx5.sevalla.app",
 ]
 
 ROOT_URLCONF = "api.urls"
@@ -102,63 +102,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "api.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-#
-# Supports two configuration modes for hosted PostgreSQL (e.g. Sevalla):
-#
-# 1. DATABASE_URL - Single connection string (many providers use this):
-#    postgres://USER:PASSWORD@HOST:PORT/NAME
-#
-# 2. Individual variables (Sevalla auto-populates these when you attach a database):
-#    DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
-#
-# If both are set, DATABASE_URL takes precedence.
-
-def _get_db_config():
-    database_url = config('DATABASE_URL', default='')
-    if database_url:
-        # Parse postgres:// or postgresql:// URL
-        import urllib.parse
-        try:
-            parsed = urllib.parse.urlparse(database_url)
-            # Handle postgres:// and postgresql://
-            if parsed.scheme not in ('postgres', 'postgresql'):
-                raise ValueError(f"Unsupported scheme: {parsed.scheme}")
-            opts = dict(urllib.parse.parse_qsl(parsed.query)) if parsed.query else {}
-            host = parsed.hostname or 'localhost'
-            if 'sslmode' not in opts:
-                opts['sslmode'] = 'prefer' if host in ('localhost', '127.0.0.1') else 'require'
-            return {
-                "ENGINE": "django.db.backends.postgresql",
-                "NAME": parsed.path.lstrip('/') or config('DB_NAME', default='eshop_db'),
-                "USER": urllib.parse.unquote(parsed.username or ''),
-                "PASSWORD": urllib.parse.unquote(parsed.password or ''),
-                "HOST": host,
-                "PORT": str(parsed.port or 5432),
-                "OPTIONS": opts,
-            }
-        except Exception as e:
-            raise ValueError(f"Invalid DATABASE_URL: {e}") from e
-    db_host = config('DB_HOST', default='localhost')
-    db_opts = {}
-    sslmode = config('DB_SSLMODE', default='')
-    if not sslmode:
-        sslmode = 'prefer' if db_host in ('localhost', '127.0.0.1') else 'require'
-    db_opts['sslmode'] = sslmode
-
-    return {
+DATABASES = {
+    "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "HOST": db_host,
-        "PORT": config('DB_PORT', default='5432'),
-        "NAME": config('DB_NAME', default='eshop_db'),
-        "USER": config('DB_USER', default='postgres'),
-        "PASSWORD": config('DB_PASSWORD', default=''),
-        "OPTIONS": db_opts,
+        "NAME": config("DB_NAME"),
+        "USER": config("DB_USER"),
+        "PASSWORD": config("DB_PASSWORD"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("DB_PORT", default="5432"),
     }
+}
 
-DATABASES = {"default": _get_db_config()}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": "mydatabase",
+#     }
+# }
 
 
 # Password validation

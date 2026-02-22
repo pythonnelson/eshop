@@ -1,11 +1,19 @@
 #!/bin/bash
 set -e
 
-# Run migrations (non-fatal so app still starts if DB is temporarily unreachable)
-echo "Running migrations..."
-python manage.py migrate --no-input || echo "Migrations failed - starting anyway"
+# Run migrations only if SKIP_MIGRATIONS is not set
+if [ -z "${SKIP_MIGRATIONS}" ]; then
+  echo "Running migrations..."
+  if python manage.py migrate --no-input 2>&1; then
+    echo "Migrations completed."
+  else
+    echo "Migrations failed - starting app anyway. Set SKIP_MIGRATIONS=1 to skip, or fix DB and redeploy."
+  fi
+else
+  echo "Skipping migrations (SKIP_MIGRATIONS is set)."
+fi
 
-# Must bind to 0.0.0.0 and PORT (Sevalla injects PORT)
-export PORT="${PORT:-8000}"
+# Sevalla injects PORT - must bind to 0.0.0.0
+PORT="${PORT:-8000}"
 echo "Starting gunicorn on 0.0.0.0:$PORT"
-exec gunicorn api.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4
+exec gunicorn api.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
