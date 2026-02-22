@@ -80,8 +80,8 @@ SIMPLE_JWT = {
 
 # CORS Settings (for React frontend)
 CORS_ALLOWED_ORIGINS = [
-    # "http://localhost:3000",
-    "https://eshop-01rx5.sevalla.app",
+    "https://eshop-proj.vercel.app",
+    "https://eshop.sevalla.app",
 ]
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[]) 
 
