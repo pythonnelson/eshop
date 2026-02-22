@@ -13,7 +13,7 @@ else
   echo "Skipping migrations (SKIP_MIGRATIONS is set)."
 fi
 
-# Sevalla injects PORT - must bind to 0.0.0.0
-PORT="${PORT:-8000}"
+# Sevalla injects PORT (default 8080) - must bind to 0.0.0.0
+PORT="${PORT:-8080}"
 echo "Starting gunicorn on 0.0.0.0:$PORT"
 exec gunicorn api.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
