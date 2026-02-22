@@ -1,21 +1,22 @@
 import os
 from pathlib import Path
 from datetime import timedelta
-from decouple import config
+import environ
+
+env = environ.Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',') if s.strip()])
-
+DEBUG = env("DEBUG") 
+# ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',') if s.strip()])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[]) 
 
 # Application definition
 
@@ -82,6 +83,7 @@ CORS_ALLOWED_ORIGINS = [
     # "http://localhost:3000",
     "https://eshop-01rx5.sevalla.app",
 ]
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[]) 
 
 ROOT_URLCONF = "api.urls"
 
@@ -102,15 +104,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "api.wsgi.application"
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": env("DB_NAME"),
+#         "USER": env("DB_USER"),
+#         "PASSWORD": env("DB_PASSWORD"),
+#         "HOST": env("DB_HOST"),
+#         "PORT": env("DB_PORT", default="5432"),
+#     },
+#     'default': env.db(), 
+# }
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST"),
-        "PORT": config("DB_PORT", default="5432"),
-    }
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": env("DATABASE_URL"),
+    },
+    'default': env.db(), 
 }
 
 # DATABASES = {

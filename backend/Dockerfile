@@ -1,24 +1,20 @@
-FROM python:3.12-slim
+FROM python:latest  
 
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
+ENV PYTHONUNBUFFERED=1 
+ 
+RUN mkdir /app
 WORKDIR /app
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN pip install --upgrade pip
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
-
+ 
+RUN pip install --upgrade pip 
+COPY requirements.txt  .
+RUN pip install --no-cache-dir -r requirements.txt
+ 
 COPY . .
 
-# Sevalla sets PORT automatically - we bind gunicorn to it at runtime
-RUN python manage.py collectstatic --no-input --clear 2>/dev/null || true
+ARG SECRET_KEY
+ARG DATABASE_URL
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN python3 manage.py collectstatic --no-input
 
-ENTRYPOINT ["/entrypoint.sh"]
+CMD ["gunicorn", "example.wsgi"]
