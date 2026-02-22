@@ -37,6 +37,8 @@ class SyncCartView(APIView):
         for it in items:
             product_id = it.get('product_id')
             quantity = int(it.get('quantity', 1))
+            color = str(it.get('selected_color', '')).strip()
+            size = str(it.get('selected_size', '')).strip()
             if quantity < 1:
                 continue
             try:
@@ -45,7 +47,10 @@ class SyncCartView(APIView):
                 continue
             if quantity > product.stock:
                 quantity = product.stock
-            CartItem.objects.create(cart=cart, product=product, quantity=quantity)
+            CartItem.objects.create(
+                cart=cart, product=product, quantity=quantity,
+                selected_color=color[:80], selected_size=size[:80]
+            )
         return Response(CartSerializer(cart).data)
 
 
@@ -57,30 +62,34 @@ class AddToCartView(APIView):
         cart, created = Cart.objects.get_or_create(customer=request.user)
         product_id = request.data.get('product_id')
         quantity = int(request.data.get('quantity', 1))
+        color = str(request.data.get('selected_color', '')).strip()
+        size = str(request.data.get('selected_size', '')).strip()
         from products.models import Product
         try:
             product = Product.objects.get(pk=product_id)
         except Product.DoesNotExist:
             return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
-        existing = cart.items.filter(product_id=product_id).first()
+        existing = cart.items.filter(
+            product_id=product_id,
+            selected_color=color[:80],
+            selected_size=size[:80]
+        ).first()
         total_qty = (existing.quantity if existing else 0) + quantity
         if total_qty > product.stock:
             return Response(
                 {'error': f'Insufficient stock. Available: {product.stock}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        # Check if item already in cart
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             product_id=product_id,
+            selected_color=color[:80],
+            selected_size=size[:80],
             defaults={'quantity': quantity}
         )
-        
         if not created:
-            # Update quantity if already exists
             cart_item.quantity += int(quantity)
             cart_item.save()
-        
         return Response({
             'message': 'Item added to cart',
             'cart': CartSerializer(cart).data

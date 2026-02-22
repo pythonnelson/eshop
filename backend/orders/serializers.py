@@ -21,6 +21,8 @@ class CartItemSerializer(serializers.ModelSerializer):
             'product', 
             'product_id', 
             'quantity', 
+            'selected_color', 
+            'selected_size', 
             'subtotal', 
             'added_at'
         ]
@@ -36,17 +38,17 @@ class CartSerializer(serializers.ModelSerializer):
     total_amount = serializers.SerializerMethodField()
 
     def get_tax_amount(self, obj):
-        from decimal import Decimal
         tax = Decimal('0')
         for item in obj.items.select_related('product', 'product__vendor').all():
             p, v = item.product, item.product.vendor
-            tax_pct = getattr(p, 'tax_percent', None) or (getattr(v, 'tax_percent', None) if v else None) or Decimal('10')
-            item_sub = p.price * item.quantity
+            tax_pct = p.tax_percent if p.tax_percent is not None else (v.tax_percent if v and v.tax_percent is not None else None)
+            if tax_pct is None:
+                tax_pct = Decimal('10')
+            item_sub = p.get_effective_price() * item.quantity
             tax += item_sub * (tax_pct / Decimal('100'))
         return tax
 
     def get_shipping_fee(self, obj):
-        from decimal import Decimal
         seen = set()
         fee = Decimal('0')
         for item in obj.items.select_related('product', 'product__vendor').all():
@@ -54,7 +56,9 @@ class CartSerializer(serializers.ModelSerializer):
             v_id = v.id if v else 0
             if v_id not in seen:
                 seen.add(v_id)
-                ship = getattr(p, 'shipping_fee', None) or (getattr(v, 'default_shipping_fee', None) if v else None) or Decimal('10')
+                ship = p.shipping_fee if p.shipping_fee is not None else (v.default_shipping_fee if v and v.default_shipping_fee is not None else None)
+                if ship is None:
+                    ship = Decimal('10')
                 fee += ship
         return fee
 
@@ -130,24 +134,27 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     f"Insufficient stock for {item.product.name}. Available: {item.product.stock}"
                 )
-        # Calculate totals using product/vendor tax and shipping
+        # Calculate totals using product values first, then vendor, then default
         subtotal = cart.total_price
         tax = Decimal('0')
         shipping_fee = Decimal('0')
         vendor_seen = set()
         for item in cart.items.select_related('product', 'product__vendor').all():
             p, v = item.product, item.product.vendor
-            tax_pct = getattr(p, 'tax_percent', None) or (getattr(v, 'tax_percent', None) if v else None) or Decimal('10')
-            item_sub = p.price * item.quantity
+            tax_pct = p.tax_percent if p.tax_percent is not None else (v.tax_percent if v and v.tax_percent is not None else None)
+            if tax_pct is None:
+                tax_pct = Decimal('10')
+            item_sub = p.get_effective_price() * item.quantity
             tax += item_sub * (tax_pct / Decimal('100'))
             v_id = v.id if v else 0
             if v_id not in vendor_seen:
                 vendor_seen.add(v_id)
-                ship = getattr(p, 'shipping_fee', None) or (getattr(v, 'default_shipping_fee', None) if v else None) or Decimal('10')
+                ship = p.shipping_fee if p.shipping_fee is not None else (v.default_shipping_fee if v and v.default_shipping_fee is not None else None)
+                if ship is None:
+                    ship = Decimal('10')
                 shipping_fee += ship
         total = subtotal + tax + shipping_fee
-        
-        # Create order, deduct inventory, and create order items in one transaction
+
         with transaction.atomic():
             order = Order.objects.create(
                 customer=user,
@@ -159,14 +166,17 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 **validated_data
             )
             for cart_item in cart.items.all():
+                price = cart_item.product.get_effective_price()
                 OrderItem.objects.create(
                     order=order,
                     product=cart_item.product,
                     vendor=cart_item.product.vendor,
                     product_name=cart_item.product.name,
-                    price=cart_item.product.price,
+                    price=price,
                     quantity=cart_item.quantity,
-                    subtotal=cart_item.product.price * cart_item.quantity
+                    subtotal=price * cart_item.quantity,
+                    selected_color=cart_item.selected_color,
+                    selected_size=cart_item.selected_size
                 )
                 Product.objects.filter(pk=cart_item.product_id).update(stock=F('stock') - cart_item.quantity)
             vendor_ids = set()

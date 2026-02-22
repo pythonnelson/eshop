@@ -18,30 +18,46 @@ export function CartProvider({ children }) {
     localStorage.setItem(GUEST_CART_KEY, JSON.stringify(guestCart));
   }, [guestCart]);
 
-  const addToGuestCart = (product, quantity = 1) => {
+  const addToGuestCart = (product, quantity = 1, selectedColor = '', selectedSize = '') => {
     setGuestCart((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
+      const existing = prev.find(
+        (i) => i.product.id === product.id
+          && (i.selected_color || '') === (selectedColor || '')
+          && (i.selected_size || '') === (selectedSize || '')
+      );
       if (existing) {
         return prev.map((i) =>
-          i.product.id === product.id ? { ...i, quantity: i.quantity + quantity } : i
+          i.product.id === product.id && (i.selected_color || '') === (selectedColor || '') && (i.selected_size || '') === (selectedSize || '')
+            ? { ...i, quantity: i.quantity + quantity }
+            : i
         );
       }
-      return [...prev, { product, quantity }];
+      return [...prev, { product, quantity, selected_color: selectedColor || '', selected_size: selectedSize || '' }];
     });
   };
 
-  const updateGuestCartItem = (productId, quantity) => {
+  const updateGuestCartItem = (productId, quantity, selectedColor = '', selectedSize = '') => {
     if (quantity < 1) {
-      removeFromGuestCart(productId);
+      removeFromGuestCart(productId, selectedColor, selectedSize);
       return;
     }
     setGuestCart((prev) =>
-      prev.map((i) => (i.product.id === productId ? { ...i, quantity } : i))
+      prev.map((i) =>
+        i.product.id === productId && (i.selected_color || '') === (selectedColor || '') && (i.selected_size || '') === (selectedSize || '')
+          ? { ...i, quantity }
+          : i
+      )
     );
   };
 
-  const removeFromGuestCart = (productId) => {
-    setGuestCart((prev) => prev.filter((i) => i.product.id !== productId));
+  const removeFromGuestCart = (productId, selectedColor = '', selectedSize = '') => {
+    setGuestCart((prev) =>
+      prev.filter(
+        (i) => !(i.product.id === productId
+          && (i.selected_color || '') === (selectedColor || '')
+          && (i.selected_size || '') === (selectedSize || ''))
+      )
+    );
   };
 
   const clearGuestCart = () => {
@@ -49,7 +65,12 @@ export function CartProvider({ children }) {
     localStorage.removeItem(GUEST_CART_KEY);
   };
 
-  const guestCartTotal = guestCart.reduce((sum, i) => sum + Number(i.product.price || 0) * i.quantity, 0);
+  const getEffectivePrice = (p) => {
+    const price = Number(p.price || 0);
+    const discount = Number(p.discount_percent || 0) / 100;
+    return p.effective_price != null ? Number(p.effective_price) : price * (1 - discount);
+  };
+  const guestCartTotal = guestCart.reduce((sum, i) => sum + getEffectivePrice(i.product) * i.quantity, 0);
   const guestCartCount = guestCart.reduce((sum, i) => sum + i.quantity, 0);
 
   return (

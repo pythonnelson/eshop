@@ -45,20 +45,22 @@ class CartItem(models.Model):
         on_delete=models.CASCADE
     )
     quantity = models.PositiveIntegerField(default=1)
+    selected_color = models.CharField(max_length=80, blank=True, default='')
+    selected_size = models.CharField(max_length=80, blank=True, default='')
     added_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         db_table = 'cart_items'
         verbose_name = 'Cart Item'
         verbose_name_plural = 'Cart Items'
-        unique_together = ['cart', 'product']
+        unique_together = ['cart', 'product', 'selected_color', 'selected_size']
     
     def __str__(self):
         return f"{self.quantity}x {self.product.name}"
     
     @property
     def subtotal(self):
-        return self.product.price * self.quantity
+        return self.product.get_effective_price() * self.quantity
 
 
 class Order(models.Model):
@@ -160,6 +162,8 @@ class OrderItem(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField()
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    selected_color = models.CharField(max_length=80, blank=True, default='')
+    selected_size = models.CharField(max_length=80, blank=True, default='')
     rating = models.PositiveSmallIntegerField(null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(5)], help_text='Customer rating 1-5')
 
     created_at = models.DateTimeField(auto_now_add=True)

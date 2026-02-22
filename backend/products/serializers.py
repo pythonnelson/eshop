@@ -32,6 +32,15 @@ class ProductSerializer(serializers.ModelSerializer):
     additional_images = ProductImageSerializer(many=True, read_only=True)
     is_in_stock = serializers.BooleanField(read_only=True)
     discount_percentage = serializers.FloatField(read_only=True)
+    effective_price = serializers.SerializerMethodField()
+
+    def get_effective_price(self, obj):
+        return str(obj.get_effective_price())
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['effective_price'] = self.get_effective_price(instance)
+        return data
     
     class Meta:
         model = Product
@@ -48,8 +57,19 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             'category',
             'name',
             'description',
+            'brand',
+            'about_this_item',
+            'technical_specs',
+            'color',
+            'size',
+            'dimension',
+            'weight',
             'price',
             'compare_at_price',
+            'color',
+            'size',
+            'dimension',
+            'weight',
             'tax_percent',
             'discount_percent',
             'shipping_fee',

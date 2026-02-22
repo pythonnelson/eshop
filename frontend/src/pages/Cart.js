@@ -47,8 +47,18 @@ export default function Cart() {
   };
 
   const isLoggedInCustomer = user?.user_type === 'CUSTOMER';
-  const items = isLoggedInCustomer ? (serverCart?.items || []) : guestCart.map((i) => ({ id: i.product.id, product: i.product, quantity: i.quantity, subtotal: i.product.price * i.quantity }));
-  const total = isLoggedInCustomer ? Number(serverCart?.total_price || 0) : guestCartTotal;
+  const getEffectivePrice = (p) => (p?.effective_price != null ? Number(p.effective_price) : Number(p?.price || 0) * (1 - (Number(p?.discount_percent) || 0) / 100));
+  const items = isLoggedInCustomer
+    ? (serverCart?.items || [])
+    : guestCart.map((i) => ({
+        id: `${i.product.id}-${i.selected_color || ''}-${i.selected_size || ''}`,
+        product: i.product,
+        quantity: i.quantity,
+        selected_color: i.selected_color || '',
+        selected_size: i.selected_size || '',
+        subtotal: getEffectivePrice(i.product) * i.quantity,
+      }));
+  const total = isLoggedInCustomer ? Number(serverCart?.total_amount ?? serverCart?.total_price ?? 0) : guestCartTotal;
 
   if (loading && isLoggedInCustomer) return <Typography>Loading cart...</Typography>;
 
@@ -89,10 +99,17 @@ export default function Cart() {
                           alt=""
                           sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1 }}
                         />
-                        <Typography>{item.product?.name || 'Product'}</Typography>
+                        <Box>
+                          <Typography>{item.product?.name || 'Product'}</Typography>
+                          {(item.selected_color || item.selected_size) && (
+                            <Typography variant="caption" color="text.secondary">
+                              {[item.selected_color && `Color: ${item.selected_color}`, item.selected_size && `Size: ${item.selected_size}`].filter(Boolean).join(' | ')}
+                            </Typography>
+                          )}
+                        </Box>
                       </Box>
                     </TableCell>
-                    <TableCell>${Number(item.product?.price || 0).toFixed(2)}</TableCell>
+                    <TableCell>${Number(isLoggedInCustomer ? (item.subtotal / item.quantity) : getEffectivePrice(item.product)).toFixed(2)}</TableCell>
                     <TableCell>
                       {isLoggedInCustomer ? (
                         <TextField
@@ -108,7 +125,7 @@ export default function Cart() {
                           type="number"
                           size="small"
                           value={item.quantity}
-                          onChange={(e) => updateGuestCartItem(item.product.id, +e.target.value)}
+                          onChange={(e) => updateGuestCartItem(item.product.id, +e.target.value, item.selected_color, item.selected_size)}
                           inputProps={{ min: 1 }}
                           sx={{ width: 80 }}
                         />
@@ -117,7 +134,7 @@ export default function Cart() {
                     <TableCell>${Number(item.subtotal || 0).toFixed(2)}</TableCell>
                     <TableCell>
                       <IconButton
-                        onClick={() => (isLoggedInCustomer ? removeItem(item.id) : removeFromGuestCart(item.product.id))}
+                        onClick={() => (isLoggedInCustomer ? removeItem(item.id) : removeFromGuestCart(item.product.id, item.selected_color, item.selected_size))}
                         size="small"
                       >
                         <DeleteIcon />

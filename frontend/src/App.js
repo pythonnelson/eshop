@@ -14,6 +14,7 @@ import VendorRegister from './pages/VendorRegister';
 import Profile from './pages/Profile';
 import ProductList from './pages/ProductList';
 import ProductDetail from './pages/ProductDetail';
+import ProductReviews from './pages/ProductReviews';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import MyOrders from './pages/MyOrders';
@@ -59,6 +60,7 @@ function App() {
             <Route path="/vendor/register" element={<Layout><VendorRegister /></Layout>} />
             <Route path="/products" element={<Layout><ProductList /></Layout>} />
             <Route path="/products/:id" element={<Layout><ProductDetail /></Layout>} />
+            <Route path="/products/:id/reviews" element={<Layout><ProductReviews /></Layout>} />
 
             <Route path="/profile" element={<Layout><ProtectedRoute><Profile /></ProtectedRoute></Layout>} />
             <Route path="/customer" element={<Layout><ProtectedRoute allowedRoles={['CUSTOMER']}><CustomerDashboard /></ProtectedRoute></Layout>} />

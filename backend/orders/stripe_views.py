@@ -45,13 +45,17 @@ class CreateStripePaymentIntentView(APIView):
         vendor_seen = set()
         for item in cart.items.select_related('product', 'product__vendor').all():
             p, v = item.product, item.product.vendor
-            tax_pct = getattr(p, 'tax_percent', None) or (getattr(v, 'tax_percent', None) if v else None) or Decimal('10')
-            item_sub = p.price * item.quantity
+            tax_pct = p.tax_percent if p.tax_percent is not None else (v.tax_percent if v and v.tax_percent is not None else None)
+            if tax_pct is None:
+                tax_pct = Decimal('10')
+            item_sub = p.get_effective_price() * item.quantity
             tax += item_sub * (tax_pct / Decimal('100'))
             v_id = v.id if v else 0
             if v_id not in vendor_seen:
                 vendor_seen.add(v_id)
-                ship = getattr(p, 'shipping_fee', None) or (getattr(v, 'default_shipping_fee', None) if v else None) or Decimal('10')
+                ship = p.shipping_fee if p.shipping_fee is not None else (v.default_shipping_fee if v and v.default_shipping_fee is not None else None)
+                if ship is None:
+                    ship = Decimal('10')
                 shipping_fee += ship
         total = int((float(subtotal) + float(tax) + float(shipping_fee)) * 100)  # cents
         with transaction.atomic():
@@ -71,14 +75,17 @@ class CreateStripePaymentIntentView(APIView):
                 payment_method='stripe',
             )
             for item in cart.items.all():
+                price = item.product.get_effective_price()
                 OrderItem.objects.create(
                     order=order,
                     product=item.product,
                     vendor=item.product.vendor,
                     product_name=item.product.name,
-                    price=item.product.price,
+                    price=price,
                     quantity=item.quantity,
-                    subtotal=item.product.price * item.quantity,
+                    subtotal=price * item.quantity,
+                    selected_color=item.selected_color,
+                    selected_size=item.selected_size,
                 )
                 Product.objects.filter(pk=item.product_id).update(stock=F('stock') - item.quantity)
         try:

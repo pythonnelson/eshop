@@ -7,6 +7,7 @@ from .views import (
     AdminCategoryDetailView,
     AdminProductListView,
     AdminProductDetailView,
+    AdminProductRetrieveView,
     AdminStatsView,
 )
 
@@ -20,5 +21,6 @@ urlpatterns = [
     path('categories/<int:pk>/', AdminCategoryDetailView.as_view(), name='admin-category-detail'),
     path('products/', AdminProductListView.as_view(), name='admin-product-list'),
     path('products/<int:pk>/approve/', AdminProductDetailView.as_view(), name='admin-product-approve'),
+    path('products/<int:pk>/', AdminProductRetrieveView.as_view(), name='admin-product-detail'),
     path('stats/', AdminStatsView.as_view(), name='admin-stats'),
 ]

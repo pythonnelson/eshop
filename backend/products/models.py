@@ -60,6 +60,9 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=300, unique=True, blank=True)
     description = models.TextField()
+    brand = models.CharField(max_length=120, blank=True, help_text='Product brand; falls back to vendor store name if empty')
+    about_this_item = models.TextField(blank=True, help_text='Bullet points for "About this item" (one per line)')
+    technical_specs = models.JSONField(default=dict, blank=True, help_text='Key-value technical specs e.g. {"Size": "24 Inch", "Resolution": "1080p"}')
     
     # Pricing
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -77,6 +80,10 @@ class Product(models.Model):
     # Inventory
     stock = models.PositiveIntegerField(default=0)
     sku = models.CharField(max_length=100, unique=True, blank=True, null=True)
+    color = models.CharField(max_length=80, blank=True)
+    size = models.CharField(max_length=120, blank=True, help_text='e.g. S,M,L or 10,12,14 or one size')
+    dimension = models.CharField(max_length=200, blank=True, help_text='e.g. 24 x 18 x 6 inches')
+    weight = models.CharField(max_length=80, blank=True, help_text='e.g. 2.5 kg or 5 lbs')
     
     # Media
     image = models.ImageField(upload_to='products/')
@@ -119,6 +126,12 @@ class Product(models.Model):
             discount = ((self.compare_at_price - self.price) / self.compare_at_price) * 100
             return round(discount, 2)
         return 0
+
+    def get_effective_price(self):
+        """Price after discount_percent is applied."""
+        from decimal import Decimal
+        pct = self.discount_percent or Decimal('0')
+        return (self.price * (Decimal('1') - pct / Decimal('100'))).quantize(Decimal('0.01'))
 
 
 class ProductImage(models.Model):

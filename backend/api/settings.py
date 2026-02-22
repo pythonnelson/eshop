@@ -6,7 +6,6 @@ from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -45,6 +44,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -105,13 +105,48 @@ WSGI_APPLICATION = "api.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+#
+# Supports two configuration modes for hosted PostgreSQL (e.g. Sevalla):
+#
+# 1. DATABASE_URL - Single connection string (many providers use this):
+#    postgres://USER:PASSWORD@HOST:PORT/NAME
+#
+# 2. Individual variables (Sevalla auto-populates these when you attach a database):
+#    DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+#
+# If both are set, DATABASE_URL takes precedence.
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+def _get_db_config():
+    database_url = config('DATABASE_URL', default='')
+    if database_url:
+        # Parse postgres:// or postgresql:// URL
+        import urllib.parse
+        try:
+            parsed = urllib.parse.urlparse(database_url)
+            # Handle postgres:// and postgresql://
+            if parsed.scheme not in ('postgres', 'postgresql'):
+                raise ValueError(f"Unsupported scheme: {parsed.scheme}")
+            return {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": parsed.path.lstrip('/') or config('DB_NAME', default='eshop_db'),
+                "USER": urllib.parse.unquote(parsed.username or ''),
+                "PASSWORD": urllib.parse.unquote(parsed.password or ''),
+                "HOST": parsed.hostname or 'localhost',
+                "PORT": str(parsed.port or 5432),
+                "OPTIONS": dict(urllib.parse.parse_qsl(parsed.query)) if parsed.query else {},
+            }
+        except Exception as e:
+            raise ValueError(f"Invalid DATABASE_URL: {e}") from e
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": config('DB_HOST', default='localhost'),
+        "PORT": config('DB_PORT', default='5432'),
+        "NAME": config('DB_NAME', default='eshop_db'),
+        "USER": config('DB_USER', default='postgres'),
+        "PASSWORD": config('DB_PASSWORD', default=''),
     }
-}
+
+DATABASES = {"default": _get_db_config()}
 
 
 # Password validation

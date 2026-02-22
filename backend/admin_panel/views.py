@@ -88,6 +88,13 @@ class AdminProductListView(generics.ListAPIView):
     permission_classes = [IsAdminRole]
 
 
+class AdminProductRetrieveView(generics.RetrieveAPIView):
+    """Get full product details for admin (including unapproved)."""
+    queryset = Product.objects.all().prefetch_related('additional_images')
+    serializer_class = ProductSerializer
+    permission_classes = [IsAdminRole]
+
+
 class AdminProductDetailView(APIView):
     """Approve, reject, or update product (is_active, is_featured)."""
     permission_classes = [IsAdminRole]
