@@ -1,3 +1,4 @@
+# Build the Django backend (backend/ folder)
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -9,10 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install -r requirements.txt gunicorn
 
-COPY . .
+COPY backend/ .
 
 RUN python manage.py collectstatic --no-input --clear 2>/dev/null || true
 
