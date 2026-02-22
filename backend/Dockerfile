@@ -7,14 +7,14 @@ RUN mkdir /app
 WORKDIR /app
  
 RUN pip install --upgrade pip 
-COPY requirements.txt  .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/requirements.txt  .
+RUN pip install -r requirements.txt
  
-COPY . .
+COPY backend/ .
 
 ARG SECRET_KEY
 ARG DATABASE_URL
 
 RUN python3 manage.py collectstatic --no-input
 
-CMD ["gunicorn", "example.wsgi"]
+CMD ["gunicorn", "api.wsgi"]
